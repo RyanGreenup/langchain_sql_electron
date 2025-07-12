@@ -34,9 +34,6 @@ $ npm run build:linux
 ## TODO
 
 - Bugs
-  - Advise user if there's no database
-    - Don't allow submit button to work.
-    - Implement logic to prevent the user triggering the agent if a database path has not been provided. If a database path has been provided, don't trigger the agent if it can't be opened. If a connection is made, make sure to release the connection so it's not locked.
   - solid transition Group to handle tab switch
     - Animations help accessibility if done right.
   - Syntax Highlighting
@@ -66,10 +63,6 @@ $ npm run build:linux
     - Button
     - Implement a code copy button that allows the user to copy a code block to the clipboard. Keep the code as simple as possible.
   - Show error if Antrhopic API Key not set
-  - Implement Agent
-    - Useful errors
-      - Corrupt SQLite
-      - No API Key
   - Implement SQL generation
   - Allow the user to enter an ANTHROPIC_API_KEY to overwrite the variable.
 - Improvements
@@ -83,3 +76,10 @@ $ npm run build:linux
     - Langchain doesn't support this
   - [X] Fix Dark Mode
   - [X] Focus the question input
+  - [X] Implement Agent
+  - [X] Useful errors
+    - [X] Corrupt SQLite
+    - [X] No API Key
+  - [X] Advise user if there's no database
+    - Don't allow submit button to work.
+    - Implement logic to prevent the user triggering the agent if a database path has not been provided. If a database path has been provided, don't trigger the agent if it can't be opened. If a connection is made, make sure to release the connection so it's not locked.
