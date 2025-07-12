@@ -78,6 +78,7 @@ const App: Component = () => {
         <AppHeader
           dbPath={state.dbPath()}
           onDbPathChange={actions.updateDbPath}
+          onApiKeyChange={actions.updateApiKey}
         />
 
         <TabNavigation

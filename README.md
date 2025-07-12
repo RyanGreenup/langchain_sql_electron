@@ -34,8 +34,10 @@ $ npm run build:linux
 ## TODO
 
 - Bugs
-  - solid transition Group to handle tab switch
+  - Focus the question input
   - Fix Dark Mode
+  - solid transition Group to handle tab switch
+    - Animations help accessibility if done right.
   - Show error if Antrhopic API Key not set
   - Implement Agent
     - Useful errors

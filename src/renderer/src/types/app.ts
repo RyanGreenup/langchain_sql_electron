@@ -37,6 +37,7 @@ export interface AgentService {
 export interface UIActions {
   switchTab: (tabId: TabId) => void
   updateDbPath: (path: string) => void
+  updateApiKey: (apiKey: string) => Promise<void>
   toggleMarkdownView: () => void
   showHelp: () => void
   hideHelp: () => void

@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js'
 import type { AppState, TabId, TabState, MarkdownTabState, UIActions, TabActions, AgentService } from '../types/app'
+import { apiKeyManager } from '../utils/apiKeyManager'
 
 interface UseAppStateReturn {
   state: {
@@ -39,6 +40,18 @@ export function useAppState(agentService: AgentService): UseAppStateReturn {
       // Update the agent service with the new database path
       if (agentService.setDatabasePath) {
         agentService.setDatabasePath(path)
+      }
+    },
+    updateApiKey: async (apiKey: string) => {
+      // Update the API key using the manager
+      try {
+        if (apiKey.trim()) {
+          await apiKeyManager.setOverrideKey(apiKey)
+        } else {
+          await apiKeyManager.clearOverrideKey()
+        }
+      } catch (error) {
+        console.error('Failed to update API key:', error)
       }
     },
     toggleMarkdownView: () => setIsMarkdownView(!isMarkdownView()),

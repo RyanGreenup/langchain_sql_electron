@@ -1,4 +1,5 @@
 import type { AgentService } from '../types/app'
+import type { QueryResult, AgentResult } from './agent'
 
 // Import the agent functions from the existing agent service
 // Note: We'll need to handle the Node.js environment differences in Electron
@@ -6,16 +7,6 @@ async function importAgentFunctions() {
   // Dynamic import to handle the agent module
   const agentModule = await import('./agent')
   return agentModule
-}
-
-interface QueryResult {
-  query: string
-  result: Record<string, any>[]
-}
-
-interface AgentResult {
-  queries: QueryResult[]
-  finalAnswer: string
 }
 
 function formatAgentResultToMarkdown(result: AgentResult): string {
@@ -90,27 +81,80 @@ function formatJsonAsMarkdownTable(jsonString: string): string {
 
 export class SqlAgentService implements AgentService {
   private dbPath: string
+  private mockService: MockAgentService
 
   constructor(dbPath: string = './Chinook.db') {
     this.dbPath = dbPath
+    this.mockService = new MockAgentService()
   }
 
   async processQuestion(question: string): Promise<string> {
+    // Check if we have a valid API key using Electron API
+    let hasApiKey = false
     try {
-      // Import and use the existing agent functions
-      const { agent_results_with_db } = await import('./agent')
-      const result = await agent_results_with_db(question, this.dbPath)
-      return formatAgentResultToMarkdown(result)
+      if (typeof window !== 'undefined' && window.api) {
+        const apiKey = await window.api.getCurrentApiKey()
+        hasApiKey = !!apiKey
+      }
+    } catch (error) {
+      console.error('Failed to check API key:', error)
+      hasApiKey = false
+    }
+
+    if (!hasApiKey) {
+      return this.generateNoApiKeyResponse(question)
+    }
+
+    try {
+      // Use IPC to run the agent in the main process where SQLite/TypeORM work properly
+      if (typeof window !== 'undefined' && window.api) {
+        const result = await window.api.runSqlAgent(question, this.dbPath)
+        
+        if (result.success) {
+          return formatAgentResultToMarkdown(result.result)
+        } else {
+          // Handle error from main process
+          if (result.error?.includes('ANTHROPIC_API_KEY') || 
+              result.error?.includes('API key') ||
+              result.error?.includes('authentication')) {
+            return this.generateApiKeyErrorResponse(question, new Error(result.error))
+          }
+          
+          console.warn('Agent error from main process:', result.error)
+          return this.mockService.processQuestion(question)
+        }
+      } else {
+        // Fallback if IPC is not available
+        console.warn('IPC not available, using mock service')
+        return this.mockService.processQuestion(question)
+      }
     } catch (error) {
       console.error('Agent processing error:', error)
       
-      // Fallback to mock response if agent fails
-      return this.generateErrorResponse(question, error)
+      // Check if it's an API key error
+      if (error.message?.includes('ANTHROPIC_API_KEY') || 
+          error.message?.includes('API key') ||
+          error.message?.includes('authentication')) {
+        return this.generateApiKeyErrorResponse(question, error)
+      }
+      
+      // For other errors, fall back to mock service
+      console.warn('Falling back to mock service due to error:', error.message)
+      return this.mockService.processQuestion(question)
     }
   }
 
   setDatabasePath(dbPath: string): void {
     this.dbPath = dbPath
+    this.mockService.setDatabasePath(dbPath)
+  }
+
+  private generateNoApiKeyResponse(question: string): string {
+    return `## ⚠️ API Key Required\n\n**Question:** "${question}"\n\n**Status:** No Anthropic API key found\n\n**Action Required:** Please set your Anthropic API key using the configuration above to use the SQL agent.\n\n---\n\n**Mock Response Preview:**\n\n${this.mockService.generateMockResponse(question)}`
+  }
+
+  private generateApiKeyErrorResponse(question: string, error: any): string {
+    return `## ⚠️ API Key Authentication Error\n\n**Question:** "${question}"\n\n**Error:** ${error.message || 'Authentication failed'}\n\n**Possible Issues:**\n- Invalid API key format\n- Expired API key\n- Insufficient API key permissions\n- Network connectivity issues\n\n**Action:** Please check your Anthropic API key configuration.\n\n---\n\n**Mock Response Preview:**\n\n${this.mockService.generateMockResponse(question)}`
   }
 
   private generateErrorResponse(question: string, error: any): string {
@@ -140,22 +184,12 @@ export class MockAgentService implements AgentService {
     return new Promise(resolve => setTimeout(resolve, this.responseDelay))
   }
 
-  private generateMockResponse(question: string): string {
+  generateMockResponse(question: string): string {
     return `## Response to: "${question}"\n\n**Database:** ${this.dbPath}\n\nThis is a mock async response that demonstrates the loading state. The agent is working properly and returning formatted content.\n\n### Sample Query:\n\`\`\`sql\nSELECT * FROM customers WHERE name LIKE '%test%'\n\`\`\`\n\n### Sample Results:\n\n| ID | Name | Email |\n|---|---|---|\n| 1 | Test User | test@example.com |\n| 2 | Another Test | another@test.com |`
   }
 }
 
 export function createAgentService(): AgentService {
-  // Check if we're in an environment where we can use the SQL agent
-  // In development, try to use the real agent, fallback to mock
-  const useRealAgent = process.env.NODE_ENV !== 'test' && 
-                      typeof process !== 'undefined' && 
-                      process.env.ANTHROPIC_API_KEY
-
-  if (useRealAgent) {
-    return new SqlAgentService()
-  } else {
-    console.warn('Using mock agent service. Set ANTHROPIC_API_KEY to use real agent.')
-    return new MockAgentService()
-  }
+  // Always start with SqlAgentService, it will handle API key validation internally
+  return new SqlAgentService()
 }

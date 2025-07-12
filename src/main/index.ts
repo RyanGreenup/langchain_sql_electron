@@ -52,6 +52,206 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  // API Key management in main process
+  let apiKeyOverride: string | null = null
+
+  // Environment variable access
+  ipcMain.handle('get-env-var', (_, name: string) => {
+    return process.env[name]
+  })
+
+  ipcMain.handle('set-env-var', (_, name: string, value: string) => {
+    process.env[name] = value
+  })
+
+  // API Key status
+  ipcMain.handle('get-api-key-status', () => {
+    const hasEnvKey = !!process.env.ANTHROPIC_API_KEY
+    const hasOverrideKey = !!apiKeyOverride
+    const isValid = hasEnvKey || hasOverrideKey
+
+    let source: 'env' | 'override' | 'none'
+    if (hasOverrideKey) {
+      source = 'override'
+    } else if (hasEnvKey) {
+      source = 'env'
+    } else {
+      source = 'none'
+    }
+
+    return {
+      hasEnvKey,
+      hasOverrideKey,
+      isValid,
+      source
+    }
+  })
+
+  // Set API key override
+  ipcMain.handle('set-api-key-override', (_, apiKey: string) => {
+    apiKeyOverride = apiKey.trim() || null
+    if (apiKeyOverride) {
+      process.env.ANTHROPIC_API_KEY = apiKeyOverride
+    }
+  })
+
+  // Clear API key override
+  ipcMain.handle('clear-api-key-override', () => {
+    apiKeyOverride = null
+    // Note: We don't delete process.env.ANTHROPIC_API_KEY here to preserve original env var
+  })
+
+  // Get current API key
+  ipcMain.handle('get-current-api-key', () => {
+    return apiKeyOverride || process.env.ANTHROPIC_API_KEY || null
+  })
+
+  // Database operations should run in main process for Electron
+  ipcMain.handle('run-sql-agent', async (_, question: string, dbPath: string) => {
+    try {
+      // For now, let's create a simplified version that runs in main process
+      // We'll need to move the agent logic to a shared location or create a main-process version
+      
+      // Import required modules for main process
+      const { ChatAnthropic } = await import("@langchain/anthropic")
+      const { SqlToolkit } = await import("langchain/agents/toolkits/sql")
+      const { SqlDatabase } = await import("langchain/sql_db")
+      const { DataSource } = await import("typeorm")
+      const { createReactAgent } = await import("@langchain/langgraph/prebuilt")
+      const { pull } = await import("langchain/hub")
+      const { ChatPromptTemplate } = await import("@langchain/core/prompts")
+      
+      // Get API key
+      const apiKey = apiKeyOverride || process.env.ANTHROPIC_API_KEY
+      if (!apiKey) {
+        throw new Error("ANTHROPIC_API_KEY is not set")
+      }
+      
+      // Initialize LLM
+      const llm = new ChatAnthropic({
+        apiKey: apiKey,
+        model: "claude-3-5-sonnet-20240620",
+        temperature: 0,
+      })
+      
+      // Initialize database
+      const datasource = new DataSource({
+        type: "sqlite" as const,
+        database: dbPath,
+        synchronize: false,
+        logging: false,
+        entities: [],
+      })
+      
+      if (!datasource.isInitialized) {
+        await datasource.initialize()
+      }
+      
+      const db = await SqlDatabase.fromDataSourceParams({
+        appDataSource: datasource,
+      })
+      
+      // Create agent
+      const toolkit = new SqlToolkit(db, llm)
+      const tools = toolkit.getTools()
+      
+      const systemPromptTemplate = await pull<ChatPromptTemplate>(
+        "langchain-ai/sql-agent-system-prompt"
+      )
+      
+      const systemMessage = await systemPromptTemplate.format({
+        dialect: "SQLite",
+        top_k: 5,
+      })
+      
+      const agent = createReactAgent({
+        llm: llm,
+        tools: tools,
+        stateModifier: systemMessage,
+      })
+      
+      // Run the agent
+      const inputs = {
+        messages: [
+          {
+            role: "user",
+            content: question,
+          },
+        ],
+      }
+      
+      const queries: any[] = []
+      let agentResponse = ""
+      let currentQuery = ""
+      
+      for await (const step of await agent.stream(inputs, {
+        streamMode: "values",
+      })) {
+        const lastMessage = step.messages[step.messages.length - 1]
+        
+        // Capture SQL queries from AI messages with tool calls
+        if (
+          lastMessage._getType() === "ai" &&
+          (lastMessage as any).tool_calls?.length
+        ) {
+          const toolCalls = (lastMessage as any).tool_calls || []
+          for (const tc of toolCalls) {
+            if (
+              (tc.name === "query-sql" || tc.name === "query-checker") &&
+              tc.args?.input
+            ) {
+              currentQuery = tc.args.input
+            }
+          }
+        }
+        
+        // Capture SQL results from tool messages
+        if (lastMessage._getType() === "tool") {
+          const toolMessage = lastMessage as any
+          if (toolMessage.name === "query-sql" && currentQuery) {
+            try {
+              const result = JSON.parse(toolMessage.content)
+              queries.push({
+                query: currentQuery,
+                result: result,
+              })
+            } catch {
+              queries.push({
+                query: currentQuery,
+                result: [{ result: toolMessage.content }],
+              })
+            }
+            currentQuery = ""
+          }
+        }
+        
+        // Capture final AI response
+        if (
+          lastMessage._getType() === "ai" &&
+          !((lastMessage as any).tool_calls?.length || 0 > 0)
+        ) {
+          agentResponse = lastMessage.content as string
+        }
+      }
+      
+      // Clean up
+      await datasource.destroy()
+      
+      const result = {
+        queries,
+        finalAnswer: agentResponse,
+      }
+      
+      return { success: true, result }
+    } catch (error) {
+      console.error('SQL Agent error in main process:', error)
+      return { 
+        success: false, 
+        error: error.message || 'Unknown error occurred' 
+      }
+    }
+  })
+
   createWindow()
 
   app.on('activate', function () {

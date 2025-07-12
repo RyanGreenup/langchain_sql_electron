@@ -11,14 +11,25 @@ import { z } from "zod";
 
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 
-function get_llm(): ChatAnthropic {
-  // Depends on ANTHROPIC_API_KEY env var
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+async function get_llm(): Promise<ChatAnthropic> {
+  // Check for API key using Electron API
+  let apiKey: string | null = null
+  
+  if (typeof window !== 'undefined' && window.api) {
+    try {
+      apiKey = await window.api.getCurrentApiKey()
+    } catch (error) {
+      console.error('Failed to get API key:', error)
+    }
+  }
+
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY is not set. Please configure your API key in the application.")
   }
 
   // Connect to the LLM
   const llm = new ChatAnthropic({
+    apiKey: apiKey,
     model: "claude-3-5-sonnet-20240620",
     temperature: 0,
   });
@@ -27,15 +38,54 @@ function get_llm(): ChatAnthropic {
 }
 
 async function get_db(dbPath: string = "./Chinook.db"): Promise<SqlDatabase> {
-  const datasource = new DataSource({
-    type: "sqlite",
-    database: dbPath,
-  });
-  const db = await SqlDatabase.fromDataSourceParams({
-    appDataSource: datasource,
-  });
+  try {
+    console.log('Attempting to initialize database at:', dbPath);
+    
+    // Check if we're in Electron renderer and need to resolve the path differently
+    let resolvedPath = dbPath;
+    if (typeof window !== 'undefined' && window.electron) {
+      // In Electron, resolve path relative to app data or resources
+      if (!dbPath.startsWith('/') && !dbPath.includes(':\\')) {
+        // Relative path - might need to be resolved relative to app resources
+        resolvedPath = dbPath.startsWith('./') ? dbPath.slice(2) : dbPath;
+      }
+    }
+    
+    console.log('Resolved database path:', resolvedPath);
 
-  return db;
+    // Initialize DataSource with proper SQLite configuration
+    const datasource = new DataSource({
+      type: "sqlite" as const,
+      database: resolvedPath,
+      synchronize: false,
+      logging: true, // Enable logging to debug issues
+      entities: [], // Empty entities array for SQLite
+    });
+
+    console.log('DataSource created, initializing...');
+
+    // Initialize the datasource before using it
+    if (!datasource.isInitialized) {
+      await datasource.initialize();
+      console.log('DataSource initialized successfully');
+    }
+
+    console.log('Creating SqlDatabase from DataSource...');
+    const db = await SqlDatabase.fromDataSourceParams({
+      appDataSource: datasource,
+    });
+
+    console.log('SqlDatabase created successfully');
+    return db;
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      dbPath,
+    });
+    throw new Error(`Failed to initialize database at ${dbPath}: ${error.message}`);
+  }
 }
 
 function formatJsonAsMarkdownTable(jsonString: string): string {
@@ -74,12 +124,12 @@ function formatJsonAsMarkdownTable(jsonString: string): string {
   }
 }
 
-interface QueryResult {
+export interface QueryResult {
   query: string;
   result: Record<string, any>[];
 }
 
-interface AgentResult {
+export interface AgentResult {
   queries: QueryResult[];
   finalAnswer: string;
 }
@@ -89,7 +139,7 @@ async function agent_results(question: string): Promise<AgentResult> {
 }
 
 async function agent_results_with_db(question: string, dbPath: string): Promise<AgentResult> {
-  const llm = get_llm();
+  const llm = await get_llm();
   const db = await get_db(dbPath);
   const toolkit = new SqlToolkit(db, llm);
   const tools = toolkit.getTools();
@@ -229,11 +279,5 @@ async function agent(question: string) {
   console.log("\n" + "=".repeat(80));
 }
 
-// async function generate_sql_query_and_output_no_agent()  {
-// }
-
-//
-// main().catch(console.error);
-agent(
-  "Which supplier should we charge more money? Assume tasks are paid on a for job basis, infer other details that may drive up costs",
-);
+// Export the functions for use in other modules
+export { agent_results, agent_results_with_db, agent };
