@@ -36,6 +36,7 @@ $ npm run build:linux
 - Bugs
   - Focus the question input
   - Advise user if there's no database
+    - Don't allow submit button to work.
   - Fix Dark Mode
   - solid transition Group to handle tab switch
     - Animations help accessibility if done right.

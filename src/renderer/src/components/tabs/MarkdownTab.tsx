@@ -1,13 +1,13 @@
+import { marked } from 'marked'
 import type { Component } from 'solid-js'
 import { Show, createSignal } from 'solid-js'
-import { marked } from 'marked'
-import type { MarkdownTabState, TabActions } from '../../types/app'
-import { FormControl, Label, LabelText, Textarea } from '../ui/FormControl'
-import Button from '../ui/Button'
-import Toggle from '../ui/Toggle'
-import OutputDisplay from '../ui/OutputDisplay'
-import AgentLog from '../ui/AgentLog'
 import { useLogStore } from '../../hooks/useLogStore'
+import type { MarkdownTabState, TabActions } from '../../types/app'
+import AgentLog from '../ui/AgentLog'
+import Button from '../ui/Button'
+import { FormControl, Label, LabelText, Textarea } from '../ui/FormControl'
+import OutputDisplay from '../ui/OutputDisplay'
+import Toggle from '../ui/Toggle'
 
 interface MarkdownTabProps {
   state: MarkdownTabState & { isMarkdownView: boolean }
@@ -73,14 +73,21 @@ const MarkdownTab: Component<MarkdownTabProps> = (props) => {
         />
       </FormControl>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
+      <div class="flex gap-6">
+        <div
+          classList={{
+            'transition-all': false,
+            'duration-300': false,
+            'flex-1': showLog(),
+            'w-full': !showLog()
+          }}
+        >
           <OutputDisplay
             isLoading={props.state.isLoading}
             fallbackMessage="Output will appear here..."
           >
             <Show when={props.state.response}>
-              <Show 
+              <Show
                 when={props.state.isMarkdownView}
                 fallback={<pre class="whitespace-pre-wrap text-sm">{props.state.response}</pre>}
               >
@@ -89,23 +96,37 @@ const MarkdownTab: Component<MarkdownTabProps> = (props) => {
             </Show>
           </OutputDisplay>
         </div>
-        
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold">Agent Activity</h3>
+
+        <Show when={showLog()}>
+          <div class="w-96 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold">Agent Activity</h3>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowLog(false)}
+                aria-label="Hide agent activity log"
+              >
+                Hide Log
+              </Button>
+            </div>
+            <AgentLog entries={logStore.entries()} />
+          </div>
+        </Show>
+
+        <Show when={!showLog()}>
+          <div class="flex flex-col items-center justify-center">
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setShowLog(!showLog())}
-              aria-label="Toggle agent activity log"
+              onClick={() => setShowLog(true)}
+              aria-label="Show agent activity log"
+              class="writing-mode-vertical text-orientation-mixed"
             >
-              {showLog() ? 'Hide Log' : 'Show Log'}
+              Show Log
             </Button>
           </div>
-          <Show when={showLog()}>
-            <AgentLog entries={logStore.entries()} />
-          </Show>
-        </div>
+        </Show>
       </div>
     </div>
   )

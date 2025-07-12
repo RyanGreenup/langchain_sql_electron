@@ -51,8 +51,8 @@ const TableTab: Component<TableTabProps> = (props) => {
 
       <div class="divider">Output</div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
+      <div class="flex gap-6">
+        <div class={`transition-all duration-300 ${showLog() ? 'flex-1' : 'w-full'}`}>
           <OutputDisplay
             isLoading={props.state.isLoading}
             fallbackMessage="Table results will appear here..."
@@ -63,22 +63,36 @@ const TableTab: Component<TableTabProps> = (props) => {
           </OutputDisplay>
         </div>
         
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold">Agent Activity</h3>
+        <Show when={showLog()}>
+          <div class="w-96 transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold">Agent Activity</h3>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowLog(false)}
+                aria-label="Hide agent activity log"
+              >
+                Hide Log
+              </Button>
+            </div>
+            <AgentLog entries={logStore.entries()} />
+          </div>
+        </Show>
+        
+        <Show when={!showLog()}>
+          <div class="flex flex-col items-center justify-center">
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setShowLog(!showLog())}
-              aria-label="Toggle agent activity log"
+              onClick={() => setShowLog(true)}
+              aria-label="Show agent activity log"
+              class="writing-mode-vertical text-orientation-mixed"
             >
-              {showLog() ? 'Hide Log' : 'Show Log'}
+              Show Log
             </Button>
           </div>
-          <Show when={showLog()}>
-            <AgentLog entries={logStore.entries()} />
-          </Show>
-        </div>
+        </Show>
       </div>
     </div>
   )
