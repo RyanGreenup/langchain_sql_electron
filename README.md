@@ -35,10 +35,12 @@ $ npm run build:linux
 
 - Bugs
   - Focus the question input
+  - Advise user if there's no database
   - Fix Dark Mode
   - solid transition Group to handle tab switch
     - Animations help accessibility if done right.
   - Syntax Highlighting
+  - Fix the UI of the API KEY
   - Code Copy
     - Keyboard?
     - Button
