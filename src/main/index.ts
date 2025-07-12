@@ -106,6 +106,56 @@ app.whenReady().then(() => {
     return apiKeyOverride || process.env.ANTHROPIC_API_KEY || null
   })
 
+  // Database validation function
+  ipcMain.handle('validate-database', async (_, dbPath: string) => {
+    if (!dbPath || !dbPath.trim()) {
+      return {
+        valid: false,
+        error: 'Database path is required'
+      }
+    }
+
+    try {
+      const { DataSource } = await import("typeorm")
+      const fs = await import('fs')
+      
+      // Check if file exists
+      if (!fs.existsSync(dbPath)) {
+        return {
+          valid: false,
+          error: `Database file not found: ${dbPath}`
+        }
+      }
+
+      // Try to create a connection
+      const datasource = new DataSource({
+        type: "sqlite" as const,
+        database: dbPath,
+        synchronize: false,
+        logging: false,
+        entities: [],
+      })
+
+      await datasource.initialize()
+      
+      // Test a basic query to ensure it's a valid SQLite database
+      await datasource.query('SELECT 1')
+      
+      // Clean up connection immediately
+      await datasource.destroy()
+      
+      return {
+        valid: true,
+        error: null
+      }
+    } catch (error) {
+      return {
+        valid: false,
+        error: `Database connection failed: ${error.message}`
+      }
+    }
+  })
+
   // Database operations should run in main process for Electron
   ipcMain.handle('run-sql-agent', async (event, question: string, dbPath: string) => {
     const sendLog = (level: string, source: string, message: string, data?: any) => {

@@ -15,6 +15,7 @@ const api = {
   
   // SQL Agent operations
   runSqlAgent: (question: string, dbPath: string) => ipcRenderer.invoke('run-sql-agent', question, dbPath),
+  validateDatabase: (dbPath: string) => ipcRenderer.invoke('validate-database', dbPath),
   
   // Log event listeners
   onAgentLog: (callback: (logData: any) => void) => {

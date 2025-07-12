@@ -34,24 +34,19 @@ $ npm run build:linux
 ## TODO
 
 - Bugs
-  - Focus the question input
   - Advise user if there's no database
     - Don't allow submit button to work.
     - Implement logic to prevent the user triggering the agent if a database path has not been provided. If a database path has been provided, don't trigger the agent if it can't be opened. If a connection is made, make sure to release the connection so it's not locked.
   - solid transition Group to handle tab switch
     - Animations help accessibility if done right.
   - Syntax Highlighting
+      - Improve the marked markdown rendering to have syntax highlighting. Here is a minimum working example:
 
       ```ts
       import { Marked } from "marked";
       import { markedHighlight } from "marked-highlight";
       import hljs from 'highlight.js';
 
-      // or UMD script
-      // <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
-      // <script src="https://cdn.jsdelivr.net/npm/marked-highlight/lib/index.umd.js"></script>
-      // const { Marked } = globalThis.marked;
-      // const { markedHighlight } = globalThis.markedHighlight;
       const marked = new Marked(
         markedHighlight({
         emptyLangClass: 'hljs',
@@ -68,15 +63,14 @@ $ npm run build:linux
 
   - Fix the UI of the API KEY
   - Code Copy
-    - Keyboard?
     - Button
+    - Implement a code copy button that allows the user to copy a code block to the clipboard. Keep the code as simple as possible.
   - Show error if Antrhopic API Key not set
   - Implement Agent
     - Useful errors
       - Corrupt SQLite
       - No API Key
   - Implement SQL generation
-  - Support Ollama / OPENAPI
   - Allow the user to enter an ANTHROPIC_API_KEY to overwrite the variable.
 - Improvements
   - Needed
@@ -84,4 +78,8 @@ $ npm run build:linux
     - Streaming Output
     - Animations
     - Command Palette
-  - Fix Dark Mode
+- DONE
+  - [X] Support Ollama / OPENAPI
+    - Langchain doesn't support this
+  - [X] Fix Dark Mode
+  - [X] Focus the question input

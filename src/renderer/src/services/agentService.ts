@@ -89,6 +89,12 @@ export class SqlAgentService implements AgentService {
   }
 
   async processQuestionStructured(question: string): Promise<AgentResult | null> {
+    // Validate database path first
+    const validationResult = await this.validateDatabase()
+    if (!validationResult.valid) {
+      throw new Error(validationResult.error)
+    }
+
     // Check if we have a valid API key using Electron API
     let hasApiKey = false
     try {
@@ -131,6 +137,12 @@ export class SqlAgentService implements AgentService {
   }
 
   async processQuestion(question: string): Promise<string> {
+    // Validate database path first
+    const validationResult = await this.validateDatabase()
+    if (!validationResult.valid) {
+      return this.generateDatabaseErrorResponse(question, validationResult.error)
+    }
+
     // Check if we have a valid API key using Electron API
     let hasApiKey = false
     try {
@@ -189,6 +201,35 @@ export class SqlAgentService implements AgentService {
   setDatabasePath(dbPath: string): void {
     this.dbPath = dbPath
     this.mockService.setDatabasePath(dbPath)
+  }
+
+  private async validateDatabase(): Promise<{ valid: boolean; error?: string }> {
+    if (!this.dbPath || !this.dbPath.trim()) {
+      return {
+        valid: false,
+        error: 'Database path is required. Please specify a database file path above.'
+      }
+    }
+
+    try {
+      if (typeof window !== 'undefined' && window.api) {
+        return await window.api.validateDatabase(this.dbPath)
+      } else {
+        return {
+          valid: false,
+          error: 'Database validation unavailable (IPC not available)'
+        }
+      }
+    } catch (error) {
+      return {
+        valid: false,
+        error: `Database validation failed: ${error.message}`
+      }
+    }
+  }
+
+  private generateDatabaseErrorResponse(question: string, error: string): string {
+    return `## ⚠️ Database Connection Error\n\n**Question:** "${question}"\n\n**Error:** ${error}\n\n**Possible Solutions:**\n- Verify the database file path is correct\n- Ensure the file exists and is accessible\n- Check that the file is a valid SQLite database\n- Make sure the file is not locked by another application\n\n**Action Required:** Please provide a valid database path above to use the SQL agent.`
   }
 
   private generateNoApiKeyResponse(question: string): string {

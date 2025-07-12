@@ -13,6 +13,11 @@ export interface SqlAgentResult {
   error?: string
 }
 
+export interface DatabaseValidationResult {
+  valid: boolean
+  error?: string
+}
+
 export interface LogEventData {
   level: string
   source: string
@@ -29,6 +34,7 @@ export interface CustomAPI {
   clearApiKeyOverride: () => Promise<void>
   getCurrentApiKey: () => Promise<string | null>
   runSqlAgent: (question: string, dbPath: string) => Promise<SqlAgentResult>
+  validateDatabase: (dbPath: string) => Promise<DatabaseValidationResult>
   onAgentLog: (callback: (logData: LogEventData) => void) => () => void
 }
 
