@@ -1,6 +1,8 @@
 # sqlagent
 
-An Electron application to work with Langchain and Anthropic to generate sql queries
+An Electron application to work with Langchain and Anthropic to generate sql queries.
+
+A Frontend for [langchain_sql_example](https://github.com/RyanGreenup/langchain_sql_example)
 
 ## Project Setup
 
