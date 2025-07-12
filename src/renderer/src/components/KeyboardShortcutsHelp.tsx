@@ -12,14 +12,14 @@ const KeyboardShortcutsHelp: Component<KeyboardShortcutsHelpProps> = (props) => 
 
   const formatShortcut = (binding: KeyBinding): string => {
     const parts: string[] = []
-    
+
     if (binding.ctrlKey) parts.push('Ctrl')
     if (binding.altKey) parts.push('Alt')
     if (binding.shiftKey) parts.push('Shift')
     if (binding.metaKey) parts.push('Cmd')
-    
+
     parts.push(binding.key)
-    
+
     return parts.join(' + ')
   }
 
@@ -44,8 +44,11 @@ const KeyboardShortcutsHelp: Component<KeyboardShortcutsHelpProps> = (props) => 
 
   return (
     <Show when={props.isVisible}>
-      <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div 
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/20"
+        onClick={props.onClose}
+      >
+        <div
           ref={dialogRef}
           class="bg-base-100 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-auto focus:outline-none"
           tabindex="0"
@@ -57,6 +60,7 @@ const KeyboardShortcutsHelp: Component<KeyboardShortcutsHelpProps> = (props) => 
               props.onClose()
             }
           }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div class="p-6">
             <div class="flex justify-between items-center mb-4">
@@ -69,7 +73,7 @@ const KeyboardShortcutsHelp: Component<KeyboardShortcutsHelpProps> = (props) => 
                 ✕
               </button>
             </div>
-            
+
             <div class="grid md:grid-cols-2 gap-6">
               <div>
                 <h3 class="text-lg font-semibold mb-3">Application Shortcuts</h3>
@@ -99,7 +103,7 @@ const KeyboardShortcutsHelp: Component<KeyboardShortcutsHelpProps> = (props) => 
             <div class="mt-6 bg-info bg-opacity-10 p-4 rounded-lg">
               <h4 class="font-semibold text-info mb-2">Accessibility Note</h4>
               <p class="text-sm text-info">
-                This application is designed to be fully accessible via keyboard navigation. 
+                This application is designed to be fully accessible via keyboard navigation.
                 All interactive elements can be reached and activated without a mouse. Use arrow keys to scroll this dialog.
               </p>
             </div>
