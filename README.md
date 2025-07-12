@@ -67,9 +67,6 @@ $ npm run build:linux
     - Implement a code copy button that allows the user to copy a code block to the clipboard. Keep the code as simple as possible.
   - Show error if Antrhopic API Key not set
   - Implement Agent
-    - Useful errors
-      - Corrupt SQLite
-      - No API Key
   - Implement SQL generation
   - Allow the user to enter an ANTHROPIC_API_KEY to overwrite the variable.
 - Improvements
@@ -83,3 +80,6 @@ $ npm run build:linux
     - Langchain doesn't support this
   - [X] Fix Dark Mode
   - [X] Focus the question input
+  - [X] Useful errors
+    - [X] Corrupt SQLite
+    - [X] No API Key

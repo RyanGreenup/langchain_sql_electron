@@ -1,4 +1,6 @@
-import { marked } from 'marked'
+import { Marked } from 'marked'
+import { markedHighlight } from 'marked-highlight'
+import hljs from 'highlight.js'
 import type { Component } from 'solid-js'
 import { Show, createSignal } from 'solid-js'
 import { useLogStore } from '../../hooks/useLogStore'
@@ -18,8 +20,21 @@ const MarkdownTab: Component<MarkdownTabProps> = (props) => {
   const [showLog, setShowLog] = createSignal(true)
   const logStore = useLogStore()
 
+  const marked = new Marked(
+    markedHighlight({
+      emptyLangClass: 'hljs',
+      langPrefix: 'hljs language-',
+      highlight(code, lang, info) {
+        // We are mostly dealing with SQL, so let's take the assumption based 
+        // on the nature of this tool
+        const language = hljs.getLanguage(lang) ? lang : 'sql';
+        return hljs.highlight(code, { language }).value;
+      }
+    })
+  );
+
   const renderMarkdown = (content: string) => {
-    return marked(content)
+    return marked.parse(content)
   }
 
   const handleToggleMarkdown = () => {
