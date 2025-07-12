@@ -38,6 +38,10 @@ $ npm run build:linux
   - Fix Dark Mode
   - solid transition Group to handle tab switch
     - Animations help accessibility if done right.
+  - Syntax Highlighting
+  - Code Copy
+    - Keyboard?
+    - Button
   - Show error if Antrhopic API Key not set
   - Implement Agent
     - Useful errors
