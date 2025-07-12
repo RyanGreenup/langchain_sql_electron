@@ -37,7 +37,6 @@ $ npm run build:linux
   - Focus the question input
   - Advise user if there's no database
     - Don't allow submit button to work.
-  - Fix Dark Mode
   - solid transition Group to handle tab switch
     - Animations help accessibility if done right.
   - Syntax Highlighting
@@ -84,3 +83,4 @@ $ npm run build:linux
     - Streaming Output
     - Animations
     - Command Palette
+  - Fix Dark Mode
