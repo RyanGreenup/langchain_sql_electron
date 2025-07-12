@@ -16,40 +16,6 @@ const TableTab: Component<TableTabProps> = (props) => {
     return marked(content)
   }
 
-  const BoilerplateTable = () => (
-    <div class="overflow-x-auto">
-      <table class="table table-zebra">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Value</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>1</td>
-            <td>Sample Data</td>
-            <td>123.45</td>
-            <td><span class="badge badge-success">Active</span></td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td>Test Record</td>
-            <td>67.89</td>
-            <td><span class="badge badge-warning">Pending</span></td>
-          </tr>
-          <tr>
-            <td>3</td>
-            <td>Demo Entry</td>
-            <td>99.99</td>
-            <td><span class="badge badge-error">Inactive</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  )
 
   return (
     <div class="space-y-6" role="tabpanel" id="tab2-panel" aria-labelledby="tab2">
@@ -81,12 +47,7 @@ const TableTab: Component<TableTabProps> = (props) => {
         fallbackMessage="Table results will appear here..."
       >
         <Show when={props.state.response}>
-          <div>
-            <div class="mb-4">
-              <div class="prose max-w-none" innerHTML={renderMarkdown(props.state.response)} />
-            </div>
-            <BoilerplateTable />
-          </div>
+          <div class="prose max-w-none" innerHTML={renderMarkdown(props.state.response)} />
         </Show>
       </OutputDisplay>
     </div>

@@ -43,6 +43,7 @@ $ npm run build:linux
       - No API Key
   - Implement SQL generation
   - Support Ollama / OPENAPI
+  - Allow the user to enter an ANTHROPIC_API_KEY to overwrite the variable.
 - Improvements
   - Needed
   - Maybe

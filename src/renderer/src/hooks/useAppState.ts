@@ -34,7 +34,13 @@ export function useAppState(agentService: AgentService): UseAppStateReturn {
   // UI Actions
   const uiActions: UIActions = {
     switchTab: (tabId: TabId) => setActiveTab(tabId),
-    updateDbPath: (path: string) => setDbPath(path),
+    updateDbPath: (path: string) => {
+      setDbPath(path)
+      // Update the agent service with the new database path
+      if (agentService.setDatabasePath) {
+        agentService.setDatabasePath(path)
+      }
+    },
     toggleMarkdownView: () => setIsMarkdownView(!isMarkdownView()),
     showHelp: () => setShowHelp(true),
     hideHelp: () => setShowHelp(false)

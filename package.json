@@ -23,10 +23,16 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
+    "@langchain/anthropic": "^0.3.24",
+    "@langchain/community": "^0.3.48",
+    "@langchain/langgraph": "^0.3.8",
     "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.11",
+    "langchain": "^0.3.29",
     "marked": "^16.0.0",
-    "tailwindcss": "^4.1.11"
+    "sqlite3": "^5.1.7",
+    "tailwindcss": "^4.1.11",
+    "typeorm": "^0.3.25"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

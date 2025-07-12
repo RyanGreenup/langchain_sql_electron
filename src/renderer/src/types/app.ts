@@ -31,6 +31,7 @@ export type TabId = 'tab1' | 'tab2'
 
 export interface AgentService {
   processQuestion: (question: string) => Promise<string>
+  setDatabasePath?: (dbPath: string) => void
 }
 
 export interface UIActions {
