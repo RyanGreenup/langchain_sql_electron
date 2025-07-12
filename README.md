@@ -41,6 +41,31 @@ $ npm run build:linux
   - solid transition Group to handle tab switch
     - Animations help accessibility if done right.
   - Syntax Highlighting
+
+      ```ts
+      import { Marked } from "marked";
+      import { markedHighlight } from "marked-highlight";
+      import hljs from 'highlight.js';
+
+      // or UMD script
+      // <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+      // <script src="https://cdn.jsdelivr.net/npm/marked-highlight/lib/index.umd.js"></script>
+      // const { Marked } = globalThis.marked;
+      // const { markedHighlight } = globalThis.markedHighlight;
+      const marked = new Marked(
+        markedHighlight({
+        emptyLangClass: 'hljs',
+          langPrefix: 'hljs language-',
+          highlight(code, lang, info) {
+            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+            return hljs.highlight(code, { language }).value;
+          }
+        })
+      );
+
+      ```
+
+
   - Fix the UI of the API KEY
   - Code Copy
     - Keyboard?
