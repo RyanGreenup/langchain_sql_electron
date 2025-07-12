@@ -14,7 +14,13 @@ const api = {
   getCurrentApiKey: () => ipcRenderer.invoke('get-current-api-key'),
   
   // SQL Agent operations
-  runSqlAgent: (question: string, dbPath: string) => ipcRenderer.invoke('run-sql-agent', question, dbPath)
+  runSqlAgent: (question: string, dbPath: string) => ipcRenderer.invoke('run-sql-agent', question, dbPath),
+  
+  // Log event listeners
+  onAgentLog: (callback: (logData: any) => void) => {
+    ipcRenderer.on('agent-log', (_, logData) => callback(logData))
+    return () => ipcRenderer.removeAllListeners('agent-log')
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

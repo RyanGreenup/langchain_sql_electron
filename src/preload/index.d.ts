@@ -13,6 +13,14 @@ export interface SqlAgentResult {
   error?: string
 }
 
+export interface LogEventData {
+  level: string
+  source: string
+  message: string
+  data?: any
+  timestamp: string
+}
+
 export interface CustomAPI {
   getEnvVar: (name: string) => Promise<string | undefined>
   setEnvVar: (name: string, value: string) => Promise<void>
@@ -21,6 +29,7 @@ export interface CustomAPI {
   clearApiKeyOverride: () => Promise<void>
   getCurrentApiKey: () => Promise<string | null>
   runSqlAgent: (question: string, dbPath: string) => Promise<SqlAgentResult>
+  onAgentLog: (callback: (logData: LogEventData) => void) => () => void
 }
 
 declare global {

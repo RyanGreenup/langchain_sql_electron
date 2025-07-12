@@ -107,12 +107,23 @@ app.whenReady().then(() => {
   })
 
   // Database operations should run in main process for Electron
-  ipcMain.handle('run-sql-agent', async (_, question: string, dbPath: string) => {
+  ipcMain.handle('run-sql-agent', async (event, question: string, dbPath: string) => {
+    const sendLog = (level: string, source: string, message: string, data?: any) => {
+      event.sender.send('agent-log', {
+        level,
+        source,
+        message,
+        data,
+        timestamp: new Date().toISOString()
+      })
+    }
+
     try {
-      // For now, let's create a simplified version that runs in main process
-      // We'll need to move the agent logic to a shared location or create a main-process version
+      sendLog('info', 'agent', `Starting SQL agent for question: "${question}"`)
+      sendLog('info', 'system', `Using database: ${dbPath}`)
       
       // Import required modules for main process
+      sendLog('debug', 'system', 'Loading required modules...')
       const { ChatAnthropic } = await import("@langchain/anthropic")
       const { SqlToolkit } = await import("langchain/agents/toolkits/sql")
       const { SqlDatabase } = await import("langchain/sql_db")
@@ -124,8 +135,11 @@ app.whenReady().then(() => {
       // Get API key
       const apiKey = apiKeyOverride || process.env.ANTHROPIC_API_KEY
       if (!apiKey) {
+        sendLog('error', 'api', 'ANTHROPIC_API_KEY is not set')
         throw new Error("ANTHROPIC_API_KEY is not set")
       }
+      
+      sendLog('success', 'api', 'API key found, initializing LLM...')
       
       // Initialize LLM
       const llm = new ChatAnthropic({
@@ -133,6 +147,9 @@ app.whenReady().then(() => {
         model: "claude-3-5-sonnet-20240620",
         temperature: 0,
       })
+      
+      sendLog('success', 'api', 'LLM initialized successfully')
+      sendLog('info', 'database', 'Connecting to database...')
       
       // Initialize database
       const datasource = new DataSource({
@@ -147,9 +164,13 @@ app.whenReady().then(() => {
         await datasource.initialize()
       }
       
+      sendLog('success', 'database', 'Database connected successfully')
+      
       const db = await SqlDatabase.fromDataSourceParams({
         appDataSource: datasource,
       })
+      
+      sendLog('info', 'agent', 'Setting up SQL agent tools...')
       
       // Create agent
       const toolkit = new SqlToolkit(db, llm)
@@ -170,6 +191,8 @@ app.whenReady().then(() => {
         stateModifier: systemMessage,
       })
       
+      sendLog('success', 'agent', 'Agent initialized, beginning analysis...')
+      
       // Run the agent
       const inputs = {
         messages: [
@@ -183,11 +206,15 @@ app.whenReady().then(() => {
       const queries: any[] = []
       let agentResponse = ""
       let currentQuery = ""
+      let stepCount = 0
       
       for await (const step of await agent.stream(inputs, {
         streamMode: "values",
       })) {
+        stepCount++
         const lastMessage = step.messages[step.messages.length - 1]
+        
+        sendLog('debug', 'agent', `Processing step ${stepCount}...`)
         
         // Capture SQL queries from AI messages with tool calls
         if (
@@ -201,6 +228,7 @@ app.whenReady().then(() => {
               tc.args?.input
             ) {
               currentQuery = tc.args.input
+              sendLog('info', 'agent', `Generated SQL query`, { query: currentQuery })
             }
           }
         }
@@ -209,17 +237,23 @@ app.whenReady().then(() => {
         if (lastMessage._getType() === "tool") {
           const toolMessage = lastMessage as any
           if (toolMessage.name === "query-sql" && currentQuery) {
+            sendLog('info', 'database', `Executing SQL query...`)
             try {
               const result = JSON.parse(toolMessage.content)
               queries.push({
                 query: currentQuery,
                 result: result,
               })
+              sendLog('success', 'database', `Query executed successfully`, { 
+                rowCount: Array.isArray(result) ? result.length : 'N/A',
+                query: currentQuery
+              })
             } catch {
               queries.push({
                 query: currentQuery,
                 result: [{ result: toolMessage.content }],
               })
+              sendLog('success', 'database', `Query executed (non-JSON result)`, { query: currentQuery })
             }
             currentQuery = ""
           }
@@ -231,19 +265,26 @@ app.whenReady().then(() => {
           !((lastMessage as any).tool_calls?.length || 0 > 0)
         ) {
           agentResponse = lastMessage.content as string
+          sendLog('info', 'agent', 'Agent generating final response...')
         }
       }
       
+      sendLog('success', 'agent', 'Analysis complete, cleaning up...')
+      
       // Clean up
       await datasource.destroy()
+      sendLog('info', 'database', 'Database connection closed')
       
       const result = {
         queries,
         finalAnswer: agentResponse,
       }
       
+      sendLog('success', 'system', `Agent completed successfully with ${queries.length} SQL queries`)
+      
       return { success: true, result }
     } catch (error) {
+      sendLog('error', 'system', `Agent failed: ${error.message}`, { error: error.stack })
       console.error('SQL Agent error in main process:', error)
       return { 
         success: false, 
