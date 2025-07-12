@@ -1,10 +1,6 @@
 # sqlagent
 
-An Electron application with Solid and TypeScript
-
-## Recommended IDE Setup
-
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+An Electron application to work with Langchain and Anthropic to generate sql queries
 
 ## Project Setup
 
