@@ -1,6 +1,9 @@
 import type { Component } from 'solid-js'
-import { createSignal, createEffect } from 'solid-js'
+import { createSignal, createEffect, onMount, onCleanup } from 'solid-js'
 import { marked } from 'marked'
+import { createKeyboardNavigation } from './services/keyboardNavigation'
+import type { KeyBinding } from './types/keyboard'
+import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp'
 
 const App: Component = () => {
   const [activeTab, setActiveTab] = createSignal('tab1')
@@ -11,6 +14,9 @@ const App: Component = () => {
   const [question2, setQuestion2] = createSignal('')
   const [response2, setResponse2] = createSignal('')
   const [isLoading, setIsLoading] = createSignal(false)
+  const [showHelp, setShowHelp] = createSignal(false)
+  
+  const keyboardService = createKeyboardNavigation()
 
   const mockAgent = async (question: string): Promise<string> => {
     setIsLoading(true)
@@ -35,6 +41,93 @@ const App: Component = () => {
     return marked(content)
   }
 
+  const switchToTab = (tabId: string) => {
+    setActiveTab(tabId)
+    keyboardService().updateFocusableElements()
+  }
+
+  const toggleMarkdownView = () => {
+    setIsMarkdown(!isMarkdown())
+  }
+
+  const focusDbPath = () => {
+    const dbInput = document.querySelector('input[placeholder*="database"]') as HTMLInputElement
+    if (dbInput) dbInput.focus()
+  }
+
+  const keyBindings: KeyBinding[] = [
+    {
+      key: '1',
+      ctrlKey: true,
+      description: 'Switch to Markdown Output tab',
+      action: () => switchToTab('tab1')
+    },
+    {
+      key: '2',
+      ctrlKey: true,
+      description: 'Switch to Table Output tab',
+      action: () => switchToTab('tab2')
+    },
+    {
+      key: 'Enter',
+      ctrlKey: true,
+      description: 'Submit current question',
+      action: () => {
+        if (activeTab() === 'tab1') {
+          handleSubmit1()
+        } else {
+          handleSubmit2()
+        }
+      }
+    },
+    {
+      key: 'm',
+      ctrlKey: true,
+      description: 'Toggle markdown/raw view (Tab 1)',
+      action: () => {
+        if (activeTab() === 'tab1') {
+          toggleMarkdownView()
+        }
+      }
+    },
+    {
+      key: 'd',
+      ctrlKey: true,
+      description: 'Focus database path input',
+      action: focusDbPath
+    },
+    {
+      key: '/',
+      ctrlKey: true,
+      description: 'Show keyboard shortcuts help',
+      action: () => setShowHelp(true)
+    },
+    {
+      key: 'Escape',
+      description: 'Close help dialog',
+      action: () => setShowHelp(false)
+    }
+  ]
+
+  onMount(() => {
+    keyboardService().registerBindings(keyBindings)
+    keyboardService().updateFocusableElements()
+    
+    const updateFocusableElements = () => {
+      setTimeout(() => keyboardService().updateFocusableElements(), 100)
+    }
+    
+    createEffect(() => {
+      activeTab()
+      updateFocusableElements()
+    })
+    
+    createEffect(() => {
+      isLoading()
+      updateFocusableElements()
+    })
+  })
+
   return (
     <div class="min-h-screen bg-base-200 p-4">
       <div class="max-w-6xl mx-auto">
@@ -58,16 +151,24 @@ const App: Component = () => {
           </div>
         </div>
 
-        <div class="tabs tabs-lifted">
+        <div class="tabs tabs-lifted" role="tablist">
           <button 
             class={`tab ${activeTab() === 'tab1' ? 'tab-active' : ''}`}
-            onClick={() => setActiveTab('tab1')}
+            onClick={() => switchToTab('tab1')}
+            role="tab"
+            aria-selected={activeTab() === 'tab1'}
+            aria-controls="tab1-panel"
+            tabindex={activeTab() === 'tab1' ? 0 : -1}
           >
             Markdown Output
           </button>
           <button 
             class={`tab ${activeTab() === 'tab2' ? 'tab-active' : ''}`}
-            onClick={() => setActiveTab('tab2')}
+            onClick={() => switchToTab('tab2')}
+            role="tab"
+            aria-selected={activeTab() === 'tab2'}
+            aria-controls="tab2-panel"
+            tabindex={activeTab() === 'tab2' ? 0 : -1}
           >
             Table Output
           </button>
@@ -75,7 +176,7 @@ const App: Component = () => {
 
         <div class="bg-base-100 rounded-box shadow-sm p-6 min-h-96">
           {activeTab() === 'tab1' && (
-            <div class="space-y-6">
+            <div class="space-y-6" role="tabpanel" id="tab1-panel" aria-labelledby="tab1">
               <div class="form-control">
                 <label class="label">
                   <span class="label-text">Question</span>
@@ -92,6 +193,7 @@ const App: Component = () => {
                     class="btn btn-primary"
                     onClick={handleSubmit1}
                     disabled={isLoading()}
+                    aria-label="Submit question for markdown output"
                   >
                     {isLoading() ? (
                       <span class="loading loading-spinner loading-sm"></span>
@@ -111,6 +213,13 @@ const App: Component = () => {
                     class="toggle toggle-primary"
                     checked={isMarkdown()}
                     onChange={(e) => setIsMarkdown(e.target.checked)}
+                    onKeyDown={(e) => {
+                      if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault()
+                        toggleMarkdownView()
+                      }
+                    }}
+                    aria-label="Toggle between rendered and raw markdown view"
                   />
                   <span class="label-text">Rendered View</span>
                 </label>
@@ -135,7 +244,7 @@ const App: Component = () => {
           )}
 
           {activeTab() === 'tab2' && (
-            <div class="space-y-6">
+            <div class="space-y-6" role="tabpanel" id="tab2-panel" aria-labelledby="tab2">
               <div class="form-control">
                 <label class="label">
                   <span class="label-text">Question</span>
@@ -152,6 +261,7 @@ const App: Component = () => {
                     class="btn btn-primary"
                     onClick={handleSubmit2}
                     disabled={isLoading()}
+                    aria-label="Submit question for table output"
                   >
                     {isLoading() ? (
                       <span class="loading loading-spinner loading-sm"></span>
@@ -214,7 +324,23 @@ const App: Component = () => {
             </div>
           )}
         </div>
+
+        <div class="mt-4 text-center">
+          <button
+            class="btn btn-sm btn-outline"
+            onClick={() => setShowHelp(true)}
+            aria-label="Show keyboard shortcuts help"
+          >
+            <kbd class="kbd kbd-sm">Ctrl</kbd> + <kbd class="kbd kbd-sm">/</kbd> Help
+          </button>
+        </div>
       </div>
+
+      <KeyboardShortcutsHelp
+        bindings={keyBindings}
+        isVisible={showHelp()}
+        onClose={() => setShowHelp(false)}
+      />
     </div>
   )
 }

@@ -1,0 +1,125 @@
+/* Enhanced focus styles for keyboard navigation */
+
+/* Focus ring for all interactive elements */
+*:focus {
+  outline: 2px solid hsl(var(--p));
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Enhanced focus for buttons */
+.btn:focus {
+  outline: 3px solid hsl(var(--p));
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px hsla(var(--p), 0.2);
+}
+
+/* Enhanced focus for form inputs */
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: 2px solid hsl(var(--p));
+  outline-offset: 2px;
+  border-color: hsl(var(--p));
+  box-shadow: 0 0 0 3px hsla(var(--p), 0.2);
+}
+
+/* Enhanced focus for tabs */
+.tab:focus {
+  outline: 3px solid hsl(var(--p));
+  outline-offset: 2px;
+  background-color: hsla(var(--p), 0.1);
+}
+
+.tab.tab-active:focus {
+  outline: 3px solid hsl(var(--pc));
+  box-shadow: 0 0 0 4px hsla(var(--pc), 0.2);
+}
+
+/* Enhanced focus for toggles */
+.toggle:focus {
+  outline: 3px solid hsl(var(--p));
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px hsla(var(--p), 0.2);
+}
+
+/* Skip to content link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: hsl(var(--p));
+  color: hsl(var(--pc));
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 0.25rem;
+  z-index: 1000;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Keyboard navigation indicators */
+.keyboard-nav-active .tab:not(:focus):hover {
+  background-color: transparent;
+}
+
+.keyboard-nav-active .btn:not(:focus):hover {
+  transform: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  *:focus {
+    outline: 3px solid;
+    outline-offset: 3px;
+  }
+  
+  .btn:focus,
+  .input:focus,
+  .textarea:focus,
+  .select:focus,
+  .toggle:focus {
+    outline: 4px solid;
+    outline-offset: 4px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .btn:focus,
+  .input:focus,
+  .textarea:focus,
+  .toggle:focus {
+    transition: none;
+  }
+}
+
+/* Focus within containers */
+.form-control:focus-within {
+  background-color: hsla(var(--p), 0.05);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  margin: -0.25rem;
+}
+
+/* Loading state accessibility */
+.loading:focus {
+  outline: 2px solid hsl(var(--bc));
+  outline-offset: 2px;
+}
+
+/* Table focus */
+.table:focus-within {
+  box-shadow: 0 0 0 2px hsl(var(--p));
+  border-radius: 0.5rem;
+}
+
+/* Prose content focus */
+.prose:focus-within {
+  outline: 2px solid hsl(var(--bc));
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
