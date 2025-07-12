@@ -35,6 +35,9 @@ importers:
       marked:
         specifier: ^16.0.0
         version: 16.0.0
+      marked-highlight:
+        specifier: ^2.2.2
+        version: 2.2.2(marked@16.0.0)
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
@@ -2797,6 +2800,11 @@ packages:
   make-fetch-happen@9.1.0:
     resolution: {integrity: sha512-+zopwDy7DNknmwPQplem5lAZX/eCOzSvSNNcSKm5eVwTkOBzoktEfXsa9L23J/GIRhxRsaxzkPEhrJEpE2F4Gg==}
     engines: {node: '>= 10'}
+
+  marked-highlight@2.2.2:
+    resolution: {integrity: sha512-KlHOP31DatbtPPXPaI8nx1KTrG3EW0Z5zewCwpUj65swbtKOTStteK3sNAjBqV75Pgo3fNEVNHeptg18mDuWgw==}
+    peerDependencies:
+      marked: '>=4 <17'
 
   marked@16.0.0:
     resolution: {integrity: sha512-MUKMXDjsD/eptB7GPzxo4xcnLS6oo7/RHimUMHEDRhUooPwmN9BEpMl7AEOJv3bmso169wHI2wUF9VQgL7zfmA==}
@@ -6465,6 +6473,10 @@ snapshots:
       - bluebird
       - supports-color
     optional: true
+
+  marked-highlight@2.2.2(marked@16.0.0):
+    dependencies:
+      marked: 16.0.0
 
   marked@16.0.0: {}
 

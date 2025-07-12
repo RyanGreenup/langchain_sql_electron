@@ -88,6 +88,48 @@ export class SqlAgentService implements AgentService {
     this.mockService = new MockAgentService()
   }
 
+  async processQuestionStructured(question: string): Promise<AgentResult | null> {
+    // Check if we have a valid API key using Electron API
+    let hasApiKey = false
+    try {
+      if (typeof window !== 'undefined' && window.api) {
+        const apiKey = await window.api.getCurrentApiKey()
+        hasApiKey = !!apiKey
+      }
+    } catch (error) {
+      console.error('Failed to check API key:', error)
+      hasApiKey = false
+    }
+
+    if (!hasApiKey) {
+      return this.mockService.generateMockStructuredResponse(question)
+    }
+
+    try {
+      // Use IPC to run the agent in the main process where SQLite/TypeORM work properly
+      if (typeof window !== 'undefined' && window.api) {
+        const result = await window.api.runSqlAgent(question, this.dbPath)
+        
+        if (result.success) {
+          return result.result
+        } else {
+          console.warn('Agent error from main process:', result.error)
+          return this.mockService.generateMockStructuredResponse(question)
+        }
+      } else {
+        // Fallback if IPC is not available
+        console.warn('IPC not available, using mock service')
+        return this.mockService.generateMockStructuredResponse(question)
+      }
+    } catch (error) {
+      console.error('Agent processing error:', error)
+      
+      // For any error, fall back to mock service
+      console.warn('Falling back to mock service due to error:', error.message)
+      return this.mockService.generateMockStructuredResponse(question)
+    }
+  }
+
   async processQuestion(question: string): Promise<string> {
     // Check if we have a valid API key using Electron API
     let hasApiKey = false
@@ -174,6 +216,29 @@ export class MockAgentService implements AgentService {
   async processQuestion(question: string): Promise<string> {
     await this.simulateDelay()
     return this.generateMockResponse(question)
+  }
+
+  async generateMockStructuredResponse(question: string): Promise<AgentResult> {
+    await this.simulateDelay()
+    
+    return {
+      queries: [
+        {
+          query: "SELECT * FROM customers WHERE name LIKE '%test%'",
+          result: [
+            { id: 1, name: "Test User", email: "test@example.com", country: "USA" },
+            { id: 2, name: "Another Test", email: "another@test.com", country: "Canada" }
+          ]
+        },
+        {
+          query: "SELECT COUNT(*) as total_customers FROM customers",
+          result: [
+            { total_customers: 59 }
+          ]
+        }
+      ],
+      finalAnswer: `Based on your question "${question}", I've executed SQL queries against the ${this.dbPath} database. This is a mock response demonstrating the structured data format. The queries above show sample customer data and counts.`
+    }
   }
 
   setDatabasePath(dbPath: string): void {

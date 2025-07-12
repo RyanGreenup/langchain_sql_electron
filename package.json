@@ -30,6 +30,7 @@
     "@tailwindcss/vite": "^4.1.11",
     "langchain": "^0.3.29",
     "marked": "^16.0.0",
+    "marked-highlight": "^2.2.2",
     "sqlite3": "^5.1.7",
     "tailwindcss": "^4.1.11",
     "typeorm": "^0.3.25"

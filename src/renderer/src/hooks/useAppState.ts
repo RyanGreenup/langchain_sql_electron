@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js'
-import type { AppState, TabId, TabState, MarkdownTabState, UIActions, TabActions, AgentService } from '../types/app'
+import type { AppState, TabId, TableTabState, MarkdownTabState, UIActions, TabActions, AgentService, SqlResult } from '../types/app'
 import { apiKeyManager } from '../utils/apiKeyManager'
 
 interface UseAppStateReturn {
@@ -7,7 +7,7 @@ interface UseAppStateReturn {
     activeTab: () => TabId
     dbPath: () => string
     tab1: () => MarkdownTabState
-    tab2: () => TabState
+    tab2: () => TableTabState
     showHelp: () => boolean
   }
   actions: UIActions & {
@@ -31,6 +31,7 @@ export function useAppState(agentService: AgentService): UseAppStateReturn {
   const [tab2Question, setTab2Question] = createSignal('')
   const [tab2Response, setTab2Response] = createSignal('')
   const [tab2Loading, setTab2Loading] = createSignal(false)
+  const [tab2SqlResult, setTab2SqlResult] = createSignal<SqlResult | null>(null)
 
   // UI Actions
   const uiActions: UIActions = {
@@ -88,16 +89,35 @@ export function useAppState(agentService: AgentService): UseAppStateReturn {
       
       setTab2Loading(true)
       try {
-        const result = await agentService.processQuestion(tab2Question())
-        setTab2Response(result)
+        // Use structured processing for table tab if available
+        if (agentService.processQuestionStructured) {
+          const structuredResult = await agentService.processQuestionStructured(tab2Question())
+          setTab2SqlResult(structuredResult)
+          
+          // Also set a fallback markdown response
+          if (structuredResult) {
+            setTab2Response(`SQL queries executed successfully. ${structuredResult.queries.length} queries processed.`)
+          } else {
+            setTab2Response('No structured results available.')
+          }
+        } else {
+          // Fallback to regular processing
+          const result = await agentService.processQuestion(tab2Question())
+          setTab2Response(result)
+          setTab2SqlResult(null)
+        }
       } catch (error) {
         console.error('Failed to process question:', error)
         setTab2Response('Error processing question. Please try again.')
+        setTab2SqlResult(null)
       } finally {
         setTab2Loading(false)
       }
     },
-    clearResponse: () => setTab2Response('')
+    clearResponse: () => {
+      setTab2Response('')
+      setTab2SqlResult(null)
+    }
   }
 
   return {
@@ -113,7 +133,8 @@ export function useAppState(agentService: AgentService): UseAppStateReturn {
       tab2: () => ({
         question: tab2Question(),
         response: tab2Response(),
-        isLoading: tab2Loading()
+        isLoading: tab2Loading(),
+        sqlResult: tab2SqlResult()
       }),
       showHelp
     },

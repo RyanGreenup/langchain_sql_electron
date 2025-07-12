@@ -1,15 +1,16 @@
 import type { Component } from 'solid-js'
 import { Show, createSignal } from 'solid-js'
 import { marked } from 'marked'
-import type { TabState, TabActions } from '../../types/app'
+import type { TableTabState, TabActions } from '../../types/app'
 import { FormControl, Label, LabelText, Textarea } from '../ui/FormControl'
 import Button from '../ui/Button'
 import OutputDisplay from '../ui/OutputDisplay'
 import AgentLog from '../ui/AgentLog'
+import SqlResultsDisplay from '../ui/SqlResultsDisplay'
 import { useLogStore } from '../../hooks/useLogStore'
 
 interface TableTabProps {
-  state: TabState
+  state: TableTabState
   actions: TabActions
 }
 
@@ -53,14 +54,24 @@ const TableTab: Component<TableTabProps> = (props) => {
 
       <div class="flex gap-6">
         <div class={`transition-all duration-300 ${showLog() ? 'flex-1' : 'w-full'}`}>
-          <OutputDisplay
-            isLoading={props.state.isLoading}
-            fallbackMessage="Table results will appear here..."
+          <Show 
+            when={props.state.sqlResult}
+            fallback={
+              <OutputDisplay
+                isLoading={props.state.isLoading}
+                fallbackMessage="Table results will appear here..."
+              >
+                <Show when={props.state.response}>
+                  <div class="prose max-w-none" innerHTML={renderMarkdown(props.state.response)} />
+                </Show>
+              </OutputDisplay>
+            }
           >
-            <Show when={props.state.response}>
-              <div class="prose max-w-none" innerHTML={renderMarkdown(props.state.response)} />
-            </Show>
-          </OutputDisplay>
+            <SqlResultsDisplay 
+              result={props.state.sqlResult!} 
+              isLoading={props.state.isLoading}
+            />
+          </Show>
         </div>
         
         <Show when={showLog()}>

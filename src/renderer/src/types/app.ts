@@ -12,15 +12,29 @@ export interface Question {
 export interface AppState {
   activeTab: TabId
   dbPath: string
-  tab1: TabState
-  tab2: TabState
+  tab1: MarkdownTabState
+  tab2: TableTabState
   showHelp: boolean
+}
+
+export interface SqlQuery {
+  query: string
+  result: any[]
+}
+
+export interface SqlResult {
+  queries: SqlQuery[]
+  finalAnswer: string
 }
 
 export interface TabState {
   question: string
   response: string
   isLoading: boolean
+}
+
+export interface TableTabState extends TabState {
+  sqlResult: SqlResult | null
 }
 
 export interface MarkdownTabState extends TabState {
@@ -31,6 +45,7 @@ export type TabId = 'tab1' | 'tab2'
 
 export interface AgentService {
   processQuestion: (question: string) => Promise<string>
+  processQuestionStructured?: (question: string) => Promise<SqlResult | null>
   setDatabasePath?: (dbPath: string) => void
 }
 
