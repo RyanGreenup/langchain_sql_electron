@@ -37,6 +37,7 @@ $ npm run build:linux
   - Focus the question input
   - Advise user if there's no database
     - Don't allow submit button to work.
+    - Implement logic to prevent the user triggering the agent if a database path has not been provided. If a database path has been provided, don't trigger the agent if it can't be opened. If a connection is made, make sure to release the connection so it's not locked.
   - solid transition Group to handle tab switch
     - Animations help accessibility if done right.
   - Syntax Highlighting

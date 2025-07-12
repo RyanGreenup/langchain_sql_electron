@@ -23,6 +23,18 @@ const App: Component = () => {
     if (dbInput) dbInput.focus()
   }
 
+  const focusQuestion = () => {
+    // Try to find the question input based on current active tab
+    const activeTabPanel = document.querySelector(`#${state.activeTab()}-panel`)
+    const questionInput = activeTabPanel?.querySelector('textarea') as HTMLTextAreaElement
+    
+    if (questionInput) {
+      questionInput.focus()
+      // Move cursor to end of text
+      questionInput.setSelectionRange(questionInput.value.length, questionInput.value.length)
+    }
+  }
+
   const submitCurrentTab = () => {
     if (state.activeTab() === 'tab1') {
       actions.tab1Actions.submitQuestion()
@@ -47,6 +59,7 @@ const App: Component = () => {
     submitCurrentTab,
     toggleMarkdownView: toggleMarkdownViewIfTab1,
     focusDbPath,
+    focusQuestion,
     showHelp: actions.showHelp,
     hideHelp: actions.hideHelp
   }

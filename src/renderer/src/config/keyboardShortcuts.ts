@@ -6,6 +6,7 @@ export interface KeyboardShortcutActions {
   submitCurrentTab: () => void
   toggleMarkdownView: () => void
   focusDbPath: () => void
+  focusQuestion: () => void
   showHelp: () => void
   hideHelp: () => void
 }
@@ -41,6 +42,12 @@ export function createKeyboardShortcuts(actions: KeyboardShortcutActions): KeyBi
       ctrlKey: true,
       description: 'Focus database path input',
       action: actions.focusDbPath
+    },
+    {
+      key: 'q',
+      ctrlKey: true,
+      description: 'Focus question input',
+      action: actions.focusQuestion
     },
     {
       key: '/',
