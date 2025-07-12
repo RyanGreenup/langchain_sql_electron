@@ -56,52 +56,66 @@ const AppHeader: Component<AppHeaderProps> = (props) => {
   }
   
   return (
-    <div class="bg-base-100 rounded-box shadow-sm mb-6 p-4">
-      <div class="flex flex-col lg:flex-row lg:items-center gap-4">
-        <div class="flex-1">
-          <h1 class="text-xl font-bold">AI Agent Tool</h1>
-        </div>
-
-        {/*START For dev purposes*/}
-        <div class="text-sm opacity-75">
-          Theme: {theme()} ({isDark() ? 'Dark' : 'Light'})
-        </div>
-        {/*END For dev purposes*/}
-
-        <div class="flex flex-col lg:flex-row gap-4 lg:items-start">
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text">Database Path:</span>
-            </label>
-            <div class="relative">
-              <Input
-                placeholder="path/to/database.sqlite"
-                value={props.dbPath}
-                onInput={(e) => props.onDbPathChange(e.target.value)}
-                class={`input-sm w-64 pr-8 ${getValidationClass()}`}
-              />
-              <div class="absolute inset-y-0 right-0 flex items-center pr-2">
-                <span class="text-sm" title={dbValidation()?.error || 'Database validation status'}>
-                  {getValidationIcon()}
-                </span>
-              </div>
+    <div class="bg-base-100 rounded-lg shadow-lg mb-8 p-6">
+      <div class="flex flex-col space-y-6">
+        {/* Header Section */}
+        <div class="flex justify-between items-center">
+          <h1 class="text-2xl font-bold text-base-content">AI Agent Tool</h1>
+          <div class="flex items-center gap-4">
+            {/*START For dev purposes*/}
+            <div class="text-sm opacity-75 px-3 py-1 bg-base-200 rounded-full">
+              Theme: {theme()} ({isDark() ? 'Dark' : 'Light'})
             </div>
-            {dbValidation() && !dbValidation()!.valid && (
-              <label class="label">
-                <span class="label-text-alt text-error">{dbValidation()!.error}</span>
-              </label>
-            )}
-          </div>
-
-          <div class="form-control">
-            <ApiKeyConfig
-              onApiKeyChange={props.onApiKeyChange}
-              class="w-64"
-            />
-          </div>
-
-          <div class="flex items-end">
+            {/*END For dev purposes*/}
             <DarkModeToggle />
+          </div>
+        </div>
+
+        {/* Configuration Section */}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Database Configuration */}
+          <div class="space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 bg-primary rounded-full"></div>
+              <h3 class="text-lg font-semibold text-base-content">Database Configuration</h3>
+            </div>
+            <div class="form-control bg-base-200 p-4 rounded-lg">
+              <label class="label">
+                <span class="label-text font-medium text-base-content/80">Database Path</span>
+                <span class="label-text-alt text-base-content/60">SQLite database file location</span>
+              </label>
+              <div class="relative">
+                <Input
+                  placeholder="path/to/database.sqlite"
+                  value={props.dbPath}
+                  onInput={(e) => props.onDbPathChange(e.target.value)}
+                  class={`input input-bordered w-full pr-12 ${getValidationClass()}`}
+                />
+                <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                  <span class="text-lg" title={dbValidation()?.error || 'Database validation status'}>
+                    {getValidationIcon()}
+                  </span>
+                </div>
+              </div>
+              {dbValidation() && !dbValidation()!.valid && (
+                <label class="label">
+                  <span class="label-text-alt text-error font-medium">{dbValidation()!.error}</span>
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* API Configuration */}
+          <div class="space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-8 bg-secondary rounded-full"></div>
+              <h3 class="text-lg font-semibold text-base-content">API Configuration</h3>
+            </div>
+            <div class="bg-base-200 p-4 rounded-lg">
+              <ApiKeyConfig
+                onApiKeyChange={props.onApiKeyChange}
+              />
+            </div>
           </div>
         </div>
       </div>

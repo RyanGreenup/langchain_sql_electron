@@ -101,42 +101,57 @@ const ApiKeyConfig: Component<ApiKeyConfigProps> = (props) => {
   }
 
   return (
-    <div class={`space-y-2 ${props.class || ''}`}>
-      <div class="flex items-center justify-between">
-        <div class="flex flex-col">
-          <span class="text-sm font-medium">Anthropic API Key</span>
-          <span class="text-xs text-base-content/60 overflow-scroll max-w-30">{getCurrentKeyDisplay()}</span>
+    <div class={`space-y-4 ${props.class || ''}`}>
+      {/* Status Header */}
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-base-content/80">Anthropic API Key</span>
+              {getStatusBadge()}
+            </div>
+            <div class="text-sm text-base-content/60 font-mono bg-base-300 px-2 py-1 rounded  overflow-x-auto max-w-sm">
+              {getCurrentKeyDisplay()}
+            </div>
+          </div>
         </div>
-        {getStatusBadge()}
       </div>
 
+      {/* Input Section */}
       <Show
         when={!showKeyInput()}
         fallback={
-          <div class="space-y-2">
-            <Input
-              type="password"
-              placeholder="sk-ant-api03-..."
-              value={overrideKey()}
-              onInput={(e) => handleKeyInput(e.target.value)}
-              class={`input-sm ${!isValidFormat() ? 'input-error' : ''}`}
-            />
+          <div class="space-y-3 p-4 bg-base-100 rounded-lg border border-base-300">
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-base-content/80">Enter API Key</label>
+              <Input
+                type="password"
+                placeholder="sk-ant-api03-..."
+                value={overrideKey()}
+                onInput={(e) => handleKeyInput(e.target.value)}
+                class={`input input-bordered w-full ${!isValidFormat() ? 'input-error' : ''}`}
+              />
+            </div>
             <Show when={!isValidFormat()}>
-              <p class="text-xs text-error">
-                Invalid API key format. Should start with 'sk-ant-' and be 50+ characters.
-              </p>
+              <div class="alert alert-error py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-xs">
+                  Invalid API key format. Should start with 'sk-ant-' and be 50+ characters.
+                </span>
+              </div>
             </Show>
-            <div class="flex gap-2">
+            <div class="flex gap-3 pt-2">
               <Button
-                size="sm"
                 onClick={handleSaveKey}
                 disabled={!isValidFormat() && overrideKey() !== ''}
+                class="flex-1"
               >
-                Save
+                Save API Key
               </Button>
               <Button
-                size="sm"
-                variant="ghost"
+                variant="outline"
                 onClick={() => {
                   setShowKeyInput(false)
                   setOverrideKey('')
@@ -149,19 +164,19 @@ const ApiKeyConfig: Component<ApiKeyConfigProps> = (props) => {
           </div>
         }
       >
-        <div class="flex gap-2">
+        <div class="flex gap-3">
           <Button
-            size="sm"
             variant="outline"
             onClick={() => setShowKeyInput(true)}
+            class="flex-1"
           >
             {apiKeyStatus().isValid ? 'Change Key' : 'Set API Key'}
           </Button>
           <Show when={apiKeyStatus().hasOverrideKey}>
             <Button
-              size="sm"
               variant="ghost"
               onClick={handleClearKey}
+              class="text-error hover:bg-error/10"
             >
               Clear Override
             </Button>
